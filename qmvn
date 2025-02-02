@@ -1,0 +1,78 @@
+#!/usr/bin/python
+
+import sys
+import colorama
+import os
+import time
+import re
+
+GROUP_ID = "fr.epita.example"
+ARTIFACT_ID = "example-app"
+ARCHETYPE_ARTIFACT_ID = "maven-archetype-simple"
+ARCHETYPE_VERSION = "1.4"
+INTERACTIVE_MODE = "false"
+
+arg_amount = 0
+arg_current = 0
+
+def check_type(res, type):
+    if type == "domain":
+        if not re.match(r"^[a-zA-Z0-9_\-]+(\.[a-zA-Z0-9_\-]+)*$", res):
+            print(f"{colorama.Fore.RED}qmvn:\n\t{res} is not a valid domain name{colorama.Style.RESET_ALL}")
+            sys.exit(1)
+    elif type == "package":
+        if not re.match(r"^[a-zA-Z0-9_\-]+$", res):
+            print(f"{colorama.Fore.RED}qmvn:\n\t{res} is not a valid package name{colorama.Style.RESET_ALL}")
+            sys.exit(1)
+    elif type == "version":
+        if not re.match(r"^[0-9]+(\.[0-9]+)*$", res):
+            print(f"{colorama.Fore.RED}qmvn:\n\t{res} is not a valid version number{colorama.Style.RESET_ALL}")
+            sys.exit(1)
+    elif type == "boolean":
+        if res.lower() not in ["true", "false"]:
+            print(f"{colorama.Fore.RED}qmvn:\n\t{res} is not a valid boolean{colorama.Style.RESET_ALL}")
+            sys.exit(1)
+
+def ask_for_arg(arg_name, arg_default, type):
+    global arg_current
+    global arg_amount
+
+    if arg_current < arg_amount:
+        arg_current += 1
+        res = sys.argv[arg_current]
+    else:
+        res = input(f"{colorama.Fore.CYAN}{arg_name}{colorama.Style.RESET_ALL} {colorama.Fore.YELLOW}[{arg_default}]{colorama.Style.RESET_ALL}: ") or arg_default
+
+    check_type(res, type)
+
+    return res
+
+if __name__ == "__main__":
+    arg_amount = len(sys.argv) - 1
+
+    print(f"{colorama.Style.BRIGHT + colorama.Fore.MAGENTA}qmvn{colorama.Style.RESET_ALL} - Quick Maven project generator")
+    print("Fill in the following information to generate a new Maven project or use inline arguments to gain time (if an argument is missing, the program will use the default value).")
+
+    print()
+    
+    group_id = ask_for_arg("group-id", GROUP_ID, "domain")
+    artifact_id = ask_for_arg("artifact-id", ARTIFACT_ID, "package")
+    archetype_artifact_id = ask_for_arg("archetype-artifact-id", ARCHETYPE_ARTIFACT_ID, "package")
+    archetype_version = ask_for_arg("archetype-version", ARCHETYPE_VERSION, "version")
+    interactive_mode = ask_for_arg("interactive-mode", INTERACTIVE_MODE, "boolean")
+
+    print()
+
+    pwd = os.getcwd()
+    start = time.time()
+    print(f"Creating Maven project {colorama.Fore.BLUE}{artifact_id}{colorama.Style.RESET_ALL} in {colorama.Fore.BLUE}{pwd}/{artifact_id}{colorama.Style.RESET_ALL}")
+
+    print()
+
+    os.system(f"mvn archetype:generate -DgroupId={group_id} -DartifactId={artifact_id} -DarchetypeArtifactId=maven-archetype-simple -DarchetypeVersion=1.4 -DinteractiveMode=false")
+    
+    end = time.time()
+    time = end - start
+
+    print()
+    print(f"Project created in {colorama.Fore.GREEN}{time:.2f}s{colorama.Style.RESET_ALL}.")
